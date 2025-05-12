@@ -43,44 +43,56 @@ app.post("/sign-up", async (req, res) => {
 
 })
 // login day
-app.post("/login", async (req, res)=>{
-    const {email, password} = req.body
-    const User = await Auth.findOne({email})
-    if(!User){
-        return res.status(404).json({message:"user not found"})
+app.post("/login", async (req, res) => {
+    const { email, password } = req.body
+    const User = await Auth.findOne({ email })
+    if (!User) {
+        return res.status(404).json({ message: "user not found" })
     }
     const isMatch = await bcrypt.compare(password, User?.password)
-    if(!isMatch){
-        return res.status(400).json({message:"incorrrect email or pasasswor"})
+    if (!isMatch) {
+        return res.status(400).json({ message: "incorrrect email or pasasswor" })
     }
     // generate token
     const accessToken = jwt.sign(
-        {User},
+        { User },
         process.env.ACCESSTOKEN,
-        {expiresIn:"3d"}
+        { expiresIn: "3d" }
     )
     const refreshToken = jwt.sign(
-        {User},
+        { User },
         process.env.REFRENCETOKEN,
-        {expiresIn:"30d"})
+        { expiresIn: "30d" })
     res.status(200).json({
-        message:"login successful",
+        message: "login successful",
         accessToken,
-        user:{
-            email:User?.email,
-            firstName:User?.firstName,
-            lastName:User?.lastName,
-            state:User?.state
+        user: {
+            email: User?.email,
+            firstName: User?.firstName,
+            lastName: User?.lastName,
+            state: User?.state
         }
     })
 })
 
-app.post("/forgot-password", async (req, res) =>{
-    const {email} = req.body
-    const User = await Auth.findOne({email})
-    if(!User){
-        return res.status(404).json({message:"user not found"})
+app.post("/forgot-password", async (req, res) => {
+    const { email } = req.body
+    const User = await Auth.findOne({ email })
+    if (!User) {
+        return res.status(404).json({ message: "user not found" })
     }
-    res.status(200).json({message:"please check email"})
+    res.status(200).json({ message: "please check email" })
+
+})
+app.patch("/reset-password", async (req, res) => {
+    const { email, password } = req.body
+    const User = await Auth.findOne({ email })
+    if (!User) {
+        return res.status(404).json({ message: "user not found" })
+    }
+    const hashedPassword = await bcrypt.hash(password, 10)
+    User.password = hashedPassword
+    await User.save()
+    res.status(200).json({ message: "password reset successful" })
 
 })
